@@ -1,6 +1,6 @@
 import com.typesafe.sbt.SbtMultiJvm
-import sbt._
 import sbt.Keys._
+import sbt._
 import xerial.sbt.Pack._
 
 packSettings
@@ -20,8 +20,8 @@ val project = Project(
     javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6", "-Xlint:unchecked", "-Xlint:deprecation"),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
-      "com.typesafe.akka" %% "akka-contrib" % akkaVersion
-    )
+      "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
+      "org.scalatest" %% "scalatest" % "2.0" % "test")
   )
 )
 
