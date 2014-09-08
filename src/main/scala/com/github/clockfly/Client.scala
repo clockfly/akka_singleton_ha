@@ -16,7 +16,7 @@ object Client {
     val system = ActorSystem("client", config)
     val role = "client"
 
-    val master = system.actorSelection("akka.tcp://system@127.0.0.1:2552/user/singleton/masterwatcher/master")
+    val master = system.actorSelection("akka.tcp://system@127.0.0.1:2551/user/singleton/masterwatcher/master")
 
     master ! SubmitApplication
 

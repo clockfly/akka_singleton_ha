@@ -198,6 +198,7 @@ object Master {
          System.out.println("Triggering shutdown hook....")
           val cluster = Cluster(system)
           cluster.leave(cluster.selfAddress)
+          cluster.down(cluster.selfAddress)
           try {
             system.awaitTermination(Duration(3, TimeUnit.SECONDS))
           } catch {
