@@ -1,4 +1,3 @@
-import com.typesafe.sbt.SbtMultiJvm
 import sbt.Keys._
 import sbt._
 import xerial.sbt.Pack._
@@ -18,9 +17,12 @@ val akkaVersion = "2.3.5"
 val scalaVersion = "2.10.4"
 
 libraryDependencies ++= Seq(
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-remote" % akkaVersion,
   "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
   "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
-  "org.scalatest" %% "scalatest" % "2.0" % "test",
+  "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "com.github.patriknw" %% "akka-data-replication" % "0.4")
 
 resolvers ++= Seq(
@@ -32,7 +34,7 @@ resolvers ++= Seq(
   "cloudera-repo" at "https://repository.cloudera.com/artifactory/cloudera-repos",
   "mapr-repo" at "http://repository.mapr.com/maven",
   "spring-releases" at "http://repo.spring.io/libs-release",
-  "patriknw" at "http://dl.bintray.com/patriknw/maven"
+  "clockfly" at "http://dl.bintray.com/clockfly/maven"
 )
 
 

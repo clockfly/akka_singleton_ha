@@ -5,19 +5,85 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorLogging, Props, _}
 import akka.cluster.ClusterEvent._
 import akka.cluster.{Cluster, Member, MemberStatus}
+import akka.contrib.datareplication.Replicator._
 import akka.contrib.pattern.ClusterSingletonManager
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.immutable
 import scala.concurrent.duration._
 
-class Master extends Actor with ActorLogging {
+import scala.concurrent.duration._
+import akka.actor.ActorLogging
+import akka.cluster.Cluster
+import akka.actor.Actor
+import akka.actor.ActorSystem
+import com.typesafe.config.ConfigFactory
+import akka.actor.Props
+import akka.contrib.datareplication.{GSet, DataReplication}
+import scala.collection.JavaConverters._
 
+
+case object SubmitApplication
+case class ApplicationState(appId : Int, attemptId : Int, state : Any)
+
+
+class Master extends Actor with ActorLogging with Stash {
+
+  val STATE = "masterstate"
+  val TIMEOUT = Duration(5, TimeUnit.SECONDS)
   log.info(s"Starting Master....")
 
-  override def receive: Actor.Receive = {
-    case _=>
+  val replicator = DataReplication(context.system).replicator
+  var state : Set[ApplicationState] = Set.empty[ApplicationState]
+  var nextAppId = 0
+
+  replicator ! Subscribe(STATE, self)
+
+
+  override  def preStart : Unit = {
+    replicator ! new Get(STATE, ReadTwo, TIMEOUT, None)
+    log.info("Recoving application state....")
+    context.become(waitForMasterState)
   }
+
+  def waitForMasterState : Receive = {
+    case GetSuccess(_, replicatedState : GSet, _) =>
+      state = replicatedState.getValue().asScala.foldLeft(state) { (set, appState) =>
+        set + appState.asInstanceOf[ApplicationState]
+      }
+      nextAppId = state.size
+      log.info(s"Successfully recoeved states ${state}, nextAppId: ${nextAppId}....")
+      context.become(waitForCommand)
+      unstashAll()
+    case x : GetFailure =>
+      log.info("GetFailure We cannot find any exisitng state, start a fresh one...")
+      context.become(waitForCommand)
+      unstashAll()
+    case x : NotFound =>
+      log.info("We cannot find any exisitng state, start a fresh one...")
+      context.become(waitForCommand)
+      unstashAll()
+    case msg =>
+      log.info(s"Get information ${msg.getClass.getSimpleName} $msg")
+      stash()
+  }
+
+  def waitForCommand : Receive = {
+    case SubmitApplication =>
+
+      log.info(s"submit new applicatin, new appId : $nextAppId")
+      val appId = nextAppId
+      nextAppId += 1
+
+      replicator ! Update(STATE, GSet(), WriteTwo, TIMEOUT)(_ + ApplicationState(appId, 0, null))
+
+    case update: UpdateResponse => log.info(s"we get update $update")
+
+    case Changed(STATE, data: GSet) =>
+      log.info("Current elements: {}", data.value)
+  }
+
+  override def receive: Actor.Receive = null
 
   override def postStop() : Unit = {
     log.info("Stopping master....")
