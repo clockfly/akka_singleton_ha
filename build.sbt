@@ -10,7 +10,8 @@ organization := "com.github.clockfly"
 
 packSettings
 
-packMain := Map("main" -> "com.github.clockfly.Master")
+packMain := Map("main" -> "com.github.clockfly.Master",
+                "client" -> "com.github.clockfly.Client")
 
 val akkaVersion = "2.3.5"
 
